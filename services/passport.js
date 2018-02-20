@@ -10,7 +10,7 @@ passport.serializeUser((user, done) => {
     done(null, user.id);
 });
 
-passport.deserializeUser((id, done) =>{
+passport.deserializeUser((id, done) => {
     User.findById(id)
         .then(user => {
             done(null, user);
@@ -20,20 +20,20 @@ passport.deserializeUser((id, done) =>{
 // google OAuth setup with passportJS authentication flow strategy
 passport.use(
     new GoogleStrategy({
-        clientID: keys.googleClientID,
-        clientSecret: keys.googleClientSecretKey,
-        callbackURL: '/auth/google/callback',
-        proxy: true,
-    }, (accessToken, refreshToken, profile, done) => {
-        console.log(profile);
-        User.findOne({googleId: profile.id}).then((existingUser) => {
+            clientID: keys.googleClientID,
+            clientSecret: keys.googleClientSecretKey,
+            callbackURL: '/auth/google/callback',
+            proxy: true,
+        },
+        async (accessToken, refreshToken, profile, done) => {
+            const existingUser = await User.findOne({ googleId: profile.id });
+
             if (existingUser) {
-                done(null, existingUser);
-            } else {
-                new User({googleId: profile.id, name: profile.displayName, emailsList: profile.emails})
-                    .save()
-                    .then(user => done(null, user));
+                return done(null, existingUser);
             }
-        });
-    })
+
+            const user = await new User({googleId: profile.id, name: profile.displayName, emailsList: profile.emails}).save();
+            done(null, user);
+        }
+    )
 );
