@@ -9,7 +9,7 @@ const Landing = () => (<h2>Landing</h2>);
 class App extends Component {
   render() {
     return (
-      <div className="App">
+      <div className="container">
           <BrowserRouter>
               <div>
                   <Header />
