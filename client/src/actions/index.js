@@ -7,6 +7,13 @@ export const fetchUser = () => async dispatch => {
     dispatch({ type: FETCH_USER, payload: res.data });
 };
 
+export const handleToken = token => async dispatch => {
+    // here we wait for the stripe token
+    const res = await axios.post('/api/stripe', token);
+
+    dispatch({ type: FETCH_USER, payload: res.data });
+};
+
 // On Redux a react component calls for an action. This action is created from an Action Creator process
 // which produces the relative action.
 // Redux-thunk allows us to manually dispatch an action rather than waiting to be dispatched from the Action Creator.
