@@ -8,8 +8,11 @@ const bodyParser = require('body-parser');
 
 // Models (declared before been used)
 require('./models/User.js');
+require('./models/Survey.js');
+
 // auto run passport google strategy.
 require('./services/passport.js');
+
 // connect with DB
 mongoose.connect(keys.mongoURI);
 
@@ -29,7 +32,8 @@ app.use(passport.session());
 
 // require routing process and assign routing to express app.
 require('./routes/authRoute.js')(app);
-require('./routes/billingRoute')(app);
+require('./routes/billingRoute.js')(app);
+require('./routes/surveyRoute.js')(app);
 
 // IN CASE OF PRODUCTION
 if(process.env.NODE_ENV == 'production') {
