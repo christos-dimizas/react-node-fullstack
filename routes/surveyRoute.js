@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const Path = require('path-parser');
-const { URL } = require('url');
+const {URL} = require('url');
 const mongoose = require('mongoose');
 const requireLogin = require('../middlewares/requireLogin');
 const requireCredits = require('../middlewares/requireCredits');
@@ -11,20 +11,21 @@ const Survey = mongoose.model('surveys');
 
 module.exports = app => {
 
-    app.get('/api/surveys/thanks', (req, res) =>{
+    // Thanks message
+    app.get('/api/surveys/:surveyId/:choice', (req, res) => {
         res.send('Thanks for voting!');
     });
 
     // Send Survey emails and do logic
     app.post('/api/surveys', requireLogin, requireCredits, async (req, res) => {
-        const { title, subject, body, recipients } = req.body;
+        const {title, subject, body, recipients} = req.body;
 
         // Create Survey model instance
         const survey = new Survey({
             title,
             subject,
             body,
-            recipients: recipients.split(',').map(email => ({ email: email.trim() })),
+            recipients: recipients.split(',').map(email => ({email: email.trim()})),
             _user: req.user.id,
             dateSent: Date.now()
         });
@@ -49,17 +50,40 @@ module.exports = app => {
 
     // SendGrid webhook for email response manipulation
     app.post('/api/surveys/webhooks', (req, res) => {
-        const events = _.map(req.body, ({email, url}) => {
-            const pathName = new URL(url).pathname;
-            const p = new Path('/api/surveys/:surveyId/:choice');
-            const match = p.test(pathName);
-            if(match) {
-                return { email: email,surveyId: match.surveyId, choice: match.choice };
-            }
-        });
-        // TODO - TO BE CONTINUED
-        // TODO - TO BE CONTINUED
-        // TODO - TO BE CONTINUED
-        console.log(events);
+        //setup the path structure which contains the desired feedback on click
+        const p = new Path('/api/surveys/:surveyId/:choice');
+        // start lodash function chaining
+        _.chain(req.body)
+            .map(({email, url}) => {
+                // the below creates (if any) an object which properties matches the p new Path structure above
+                const match = p.test(new URL(url).pathname);
+                if (match) {
+                    return {
+                        email: email,
+                        surveyId: match.surveyId,
+                        choice: match.choice
+                    };
+                }
+            })
+            .compact() // compact removes undefined entries
+            .uniqBy('email', 'surveyId') // uniqBy removes duplicates
+            // Below is the Mongoose model query for fetching the survey in which the
+            .each(event => {
+                Survey.updateOne({
+                    _id: event.surveyId,
+                    recipients: {
+                        $elemMatch: {email: event.email, responded: false}
+                    }
+                }, {
+                    $inc: {[event.choice]: 1},
+                    $set: {'recipients.$.responded': true},
+                    lastResponded: new Date()
+                }).exec(); // prepares the query for execution
+            })
+            .value(); // return result
+        // the below doesn't corresponds to a desired response (sendgrid doesn't care for any response)
+        res.send({});
+
     });
+
 };
