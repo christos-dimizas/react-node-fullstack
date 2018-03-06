@@ -1,3 +1,6 @@
+const _ = require('lodash');
+const Path = require('path-parser');
+const { URL } = require('url');
 const mongoose = require('mongoose');
 const requireLogin = require('../middlewares/requireLogin');
 const requireCredits = require('../middlewares/requireCredits');
@@ -44,9 +47,19 @@ module.exports = app => {
         }
     });
 
-    // SendGrid webhook for email responses
-    app.post('/api/surveys/webhooks', (req, res)=>{
-        console.log(req.body);
-        res.send({});
+    // SendGrid webhook for email response manipulation
+    app.post('/api/surveys/webhooks', (req, res) => {
+        const events = _.map(req.body, ({email, url}) => {
+            const pathName = new URL(url).pathname;
+            const p = new Path('/api/surveys/:surveyId/:choice');
+            const match = p.test(pathName);
+            if(match) {
+                return { email: email,surveyId: match.surveyId, choice: match.choice };
+            }
+        });
+        // TODO - TO BE CONTINUED
+        // TODO - TO BE CONTINUED
+        // TODO - TO BE CONTINUED
+        console.log(events);
     });
 };
