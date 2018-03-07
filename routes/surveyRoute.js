@@ -11,6 +11,13 @@ const Survey = mongoose.model('surveys');
 
 module.exports = app => {
 
+    // Get a list of the surveys
+    app.get('/api/surveys', requireLogin, async (req, res)=>{
+        // Fetch all surveys created by the current user
+        const surveys = await Survey.find({_user: req.user.id});
+        res.send(surveys);
+    });
+
     // Thanks message
     app.get('/api/surveys/:surveyId/:choice', (req, res) => {
         res.send('Thanks for voting!');
