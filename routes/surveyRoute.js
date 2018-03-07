@@ -14,7 +14,8 @@ module.exports = app => {
     // Get a list of the surveys
     app.get('/api/surveys', requireLogin, async (req, res)=>{
         // Fetch all surveys created by the current user
-        const surveys = await Survey.find({_user: req.user.id});
+        const surveys = await Survey.find({_user: req.user.id})
+            .select({recipients: false}); // DO NOT include recipients to our result
         res.send(surveys);
     });
 
@@ -34,7 +35,7 @@ module.exports = app => {
             body,
             recipients: recipients.split(',').map(email => ({email: email.trim()})),
             _user: req.user.id,
-            dateSent: Date.now()
+            dateSend: Date.now()
         });
 
         // Great place to send an email!
