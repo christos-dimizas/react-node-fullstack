@@ -24,6 +24,4 @@ Deployment Checklist:
     3. Specify start script
     4. Create .gitignore file
     
-    
-git remote add heroku https://git.heroku.com/ancient-ravine-27398.git
-git push heroku master
+   
